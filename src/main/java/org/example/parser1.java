@@ -50,19 +50,14 @@ public class parser1 {
                 }
                 System.out.println();
             }
-
         }
 
-//        szw.setGraph(dg);
         hws.setGraph(dg);
-//        tjs.setGraph(dg);
-//        tis.setGraph(dg);
-
         long startTime;
         long endTime;
         hws.setPathLimit(8);  //设置循环最大边数
         startTime = System.currentTimeMillis();
-        List<List<String>> l2 = hws.findSimpleCycles();
+        List<List<String>> l2 = hws.findSimpleCycles(); //寻找图中的循环
         endTime = System.currentTimeMillis();
         System.out.println("程序运行时间：" + (endTime - startTime) + "ms");
         System.out.println(l2.size());
@@ -72,9 +67,9 @@ public class parser1 {
 //        cf.find(dg, "freecs", "freecs");
 //        System.out.println(cf.getNum());
 
-        List<List<String>> l3 = Dependencyfilter.filterByDuplicate(l2);
+        List<List<String>> l3 = Dependencyfilter.filterByDuplicate(l2); //只保留最大环
         System.out.println(l3.size());
-        Dependencyfilter.printDependency(l3, 50);
+        Dependencyfilter.printDependency(l3, 50); //输出循环信息
 
 //        HotspotFinder hf = new HotspotFinder(dg);  //筛选热点顶点
 //        Set<String> result = hf.find(70);
@@ -127,9 +122,8 @@ class GraphNode {  //暂时不用
 
 
 class DependParser {
-    ArrayList<GraphNode> GraphList;
-    String path;
-    DirectedMultigraph<String, DefaultEdge> dg = new DirectedMultigraph(DefaultEdge.class);
+    String path; //文件路径
+    DirectedMultigraph<String, DefaultEdge> dg ;
 
     public DependParser(DirectedMultigraph<String, DefaultEdge> dg1, String path1) {
         dg = dg1;
@@ -216,7 +210,7 @@ class DependParser {
 
 }
 
-class HotspotFinder {
+class HotspotFinder { //热点寻找
     DirectedMultigraph<String, DefaultEdge> dg;
 
     public HotspotFinder(DirectedMultigraph<String, DefaultEdge> dg) {
@@ -247,7 +241,7 @@ class Dependencyfilter {
         this.s1 = s1;
     }
 
-    public List<List<String>> filterByHotspot() {
+    public List<List<String>> filterByHotspot() { //只保留包含热点的循环
         Iterator<List<String>> iterator = l1.iterator();
         while (iterator.hasNext()) {
             boolean flag = false;
@@ -266,7 +260,7 @@ class Dependencyfilter {
 
     }
 
-    public static List<List<String>> filterByDuplicate(List<List<String>> ll) {
+    public static List<List<String>> filterByDuplicate(List<List<String>> ll) {  //只保留最大环
         List<List<String>> result = new ArrayList<>();
         List<String> old;
         old = ll.get(0);
@@ -283,7 +277,7 @@ class Dependencyfilter {
         return result;
     }
 
-    public static void printDependency(List<List<String>> l, int len) {
+    public static void printDependency(List<List<String>> l, int len) { //输出循环
         int i = 0;
         for (List<String> l1 : l) {
             System.out.println(l1);
@@ -310,7 +304,7 @@ class cyclicFinder {
         return num;
     }
 
-    public void find(DirectedMultigraph<String, DefaultEdge> dg, String node, String start) throws InvocationTargetException, IllegalAccessException {
+    public void find(DirectedMultigraph<String, DefaultEdge> dg, String node, String start) throws InvocationTargetException, IllegalAccessException { //DFS算法寻找循环
         m.setAccessible(true);
         if (visited.get(node) != null && visited.get(node) == true) {
             if (l.contains(node)) {
