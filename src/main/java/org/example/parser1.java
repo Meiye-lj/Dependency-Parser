@@ -1,5 +1,6 @@
 package org.example;
 
+import com.sun.jdi.event.StepEvent;
 import org.jgrapht.alg.cycle.*;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedMultigraph;
@@ -25,8 +26,8 @@ public class parser1 {
 //        TiernanSimpleCycles tis = new TiernanSimpleCycles();
         HawickJamesSimpleCycles hws = new HawickJamesSimpleCycles();
         DirectedMultigraph<String, DefaultEdge> dg = new DirectedMultigraph(DefaultEdge.class);
-        DependParser parser = new DependParser(dg, "D:/学习/实验室/构建依赖/依赖解析/freecs/freecs2.txt");
-        parser.parseClass();  //建立依赖图
+        DependParser parser = new DependParser(dg, "D:/学习/实验室/构建依赖/依赖解析/findingbugs/findingbugs1.txt");
+        parser.parsePackage();  //建立依赖图
 
         Set<String> vs1 = dg.vertexSet();  //顶点集
         Set<DefaultEdge> ds1 = dg.edgeSet();  //边集
@@ -55,7 +56,7 @@ public class parser1 {
         hws.setGraph(dg);
         long startTime;
         long endTime;
-        hws.setPathLimit(8);  //设置循环最大边数
+        hws.setPathLimit(10);  //设置循环最大边数
         startTime = System.currentTimeMillis();
         List<List<String>> l2 = hws.findSimpleCycles(); //寻找图中的循环
         endTime = System.currentTimeMillis();
@@ -63,13 +64,18 @@ public class parser1 {
         System.out.println(l2.size());
 //        Dependencyfilter.printDependency(l2, 500);
 
-//        cyclicFinder cf = new cyclicFinder();
-//        cf.find(dg, "freecs", "freecs");
-//        System.out.println(cf.getNum());
+        cyclicFinder cf = new cyclicFinder();
+        cf.findCycle(dg);
+        List<List<String>> l4=cf.result;
+        System.out.println(cf.getNum());
+        Dependencyfilter.printDependency(l4, 50);
+        System.out.println("---------------------------------------------------------------------------------");
+
 
         List<List<String>> l3 = Dependencyfilter.filterByDuplicate(l2); //只保留最大环
         System.out.println(l3.size());
         Dependencyfilter.printDependency(l3, 50); //输出循环信息
+
 
 //        HotspotFinder hf = new HotspotFinder(dg);  //筛选热点顶点
 //        Set<String> result = hf.find(70);
@@ -123,7 +129,7 @@ class GraphNode {  //暂时不用
 
 class DependParser {
     String path; //文件路径
-    DirectedMultigraph<String, DefaultEdge> dg ;
+    DirectedMultigraph<String, DefaultEdge> dg;
 
     public DependParser(DirectedMultigraph<String, DefaultEdge> dg1, String path1) {
         dg = dg1;
@@ -294,9 +300,11 @@ class cyclicFinder {
     int num = 0;
     Class clazz = DefaultEdge.class;
     Method m = clazz.getDeclaredMethod("getTarget");
-    LinkedList<String> l = new LinkedList<>();
+    ArrayList<String> trace = new ArrayList<>();
+    List<List<String>> result = new ArrayList<>();
 
     cyclicFinder() throws NoSuchMethodException {
+        System.out.println("start");
     }
 
 
@@ -304,23 +312,37 @@ class cyclicFinder {
         return num;
     }
 
-    public void find(DirectedMultigraph<String, DefaultEdge> dg, String node, String start) throws InvocationTargetException, IllegalAccessException { //DFS算法寻找循环
+    public void findCycle(DirectedMultigraph<String, DefaultEdge> dg) throws InvocationTargetException, IllegalAccessException {
+        Set<String> vs1 = dg.vertexSet();
+        for(String s:vs1){
+            if(visited.get(s) == null)
+            find(dg,s);
+        }
+
+    }
+
+    public void find(DirectedMultigraph<String, DefaultEdge> dg, String node) throws InvocationTargetException, IllegalAccessException { //DFS算法寻找循环
         m.setAccessible(true);
         if (visited.get(node) != null && visited.get(node) == true) {
-            if (l.contains(node)) {
-//                System.out.println(l);
+            int j;
+            List<String> l1 = new ArrayList<>();
+            if ((j = trace.indexOf(node)) != -1) {
                 num++;
+                while (j < trace.size()) {
+                    l1.add(trace.get(j));
+                    j++;
+                }
             }
+            if(l1.size()>0)
+            result.add(l1);
             return;
         }
         visited.put(node, true);
-        l.add(node);
+        trace.add(node);
         Set<DefaultEdge> defaultEdges = dg.outgoingEdgesOf(node);
         for (DefaultEdge edge : defaultEdges) {
-            find(dg, (String) m.invoke(edge), start);
+            find(dg, (String) m.invoke(edge));
         }
-        visited.put(node, false);
-        l.remove(node);
-
+        trace.remove(node);
     }
 }
